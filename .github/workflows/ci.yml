@@ -1,0 +1,164 @@
+---
+name: CI
+'on':
+  pull_request:
+  push:
+    branches:
+      - main
+    schedule:
+      - cron: "20 3 1 * *"
+
+defaults:
+  run:
+    working-directory: 'romanrue.wsl_distro'
+
+jobs:
+  # lint:
+  #   name: Lint
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Check out the codebase.
+  #       uses: actions/checkout@v2
+  #       with:
+  #         path: 'romanrue.wsl_distro'
+
+  #     - name: Set up Python 3.
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: '3.x'
+
+  #     - name: Install dependencies.
+  #       run: >
+  #         : \
+  #         && pip3 install \
+  #           yamllint \
+  #           ansible \
+  #           ansible-lint \
+  #         && :
+
+  #     - name: Lint code.
+  #       run: |
+  #         yamllint .
+  #         ansible-lint . --force-color
+
+  molecule:
+    name: Build
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        includes:
+          - win_ver: 20H2
+            playbook: converge.yml
+          # - win_ver: 20H2-amd64
+          #   playbook: converge.yml
+          # - win_ver: 1909
+          #   playbook: converge.yml
+          # - win_ver: 1909-amd64
+          #   playbook: converge.yml
+
+    steps:
+      - name: Check out the codebase
+        uses: actions/checkout@v2
+        with:
+          path: 'romanrue.wsl_distro'
+
+      - name: Set up WSL
+        uses: Vampire/setup-wsl@v1
+        with:
+          distribution: Ubuntu-20.04
+          wsl-shell-user: ansible-controller
+          wsl-shell-command: bash
+          set-as-default: 'true'
+          additional-packages:
+            python3
+
+      - name: Install dependencies
+        shell: wsl-bash {0}
+        run: >
+          set -eux
+          && sudo apt-get update
+          && sudo apt-get install -y
+            curl
+          && mkdir opt/ bin/
+          && curl --location --output
+            vitualenv.pyz https://bootstrap.pypa.io/virtualenv.pyz
+          && python3 virtualenv.pyz opt/venv
+          && opt/venv/bin/pip install virtualenv
+          && ln -sf opt/venv/bin/virtualenv bin/virtualenv
+          && rm -rf virtualenv.pyz
+          && bin/virtualenv venv
+          && . venv/bin/activate
+          && pip install -yq -no-cache-dir --upgrade pip
+          && pip install -yq -no-cache-dir
+            ansible
+            molecule[docker]
+            pywinrm
+
+      # - name: Set up Python 3
+      #   uses: actions/setup-python@v2
+      #   with:
+      #     python-version: '3.x'
+
+      # - name: Install dependencies
+      #   run: >
+      #     set -eux \
+      #     && pip install --no-cache-dir --upgrade pip \
+      #     && pip install --no-cache-dir \
+      #       molecule[docker] \
+      #     && :
+
+      # - name: Build Ansible controller
+      #   run: >
+      #     docker build . `
+      #     --target ansible-molecule `
+      #     --file .github/workflows/helpers/Dockerfile `
+
+  # - name: Check out the codebase.
+  #   uses: action/checkout@v2
+  #   with:
+  #     path: 'romanrue.wsl_distro'
+
+  # molecule:
+  #   name: Molecule
+  #   needs: Build
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       include:
+  #         - win_ver: 20H2
+  #           playbook: converge.yml
+  #         - win_ver: 20H2-amd64
+  #           playbook: converge.yml
+  #         - win_ver: 1909
+  #           playbook: converge.yml
+  #         - win_ver: 1909-amd64
+  #           playbook: converge.yml
+
+  #   steps:
+  #     - name: Check out the codebase.
+  #       uses: actions/checkout@v2
+  #       with:
+  #         path: 'romanrue.wsl_distro'
+
+  #     - name: Set up Python 3.
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: '3.x'
+
+  #     - name: Install test dependencies.
+  #       run: >
+  #         : \
+  #         && pip3 install \
+  #           ansible \
+  #           molecule[docker] \
+  #           docker \
+  #         && :
+
+  #     - name: Run Molecule tests.
+  #       run: molecule test
+  #       env:
+  #         PY_COLORS: '1'
+  #         ANSIBLE_FORCE_COLOR: '1'
+  #         MOLECULE_WIN_VER: ${{ matrix.win_ver }}
+  #         MOLECULE_PLAYBOOK: ${{ matrix.playbook }}
