@@ -1,0 +1,6 @@
+---
+wsl_distro_method: 'Microsoft Store'
+wsl_distro_state: present
+wsl_distro_product_id: CanonicalGroupLimited.Ubuntu20.04onWindows
+
+wsl_distro_path: ''

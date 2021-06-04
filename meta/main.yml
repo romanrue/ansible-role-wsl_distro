@@ -1,0 +1,18 @@
+---
+dependencies: []
+
+galaxy_info:
+  role_name: wsl-distro
+  author: romanrue
+  description: "Installs wsl distro on a windows device"
+  company: empty
+  licence: "license (BSD, MIT)"
+  min_ansible_version: 2.4
+  platforms:
+    - name: Windows
+      versions:
+        - all
+  galaxy_tags:
+    - workstation
+    - windows
+    - wsl
